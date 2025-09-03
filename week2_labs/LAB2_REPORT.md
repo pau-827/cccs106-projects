@@ -10,7 +10,7 @@
 ### Repository Setup
 - **GitHub Repository:** [(https://github.com/pau-827/cccs106-projects)]
 - **Local Repository:** ✅ Initialized and connected
-- **Commit History:** [6] commits with descriptive messages
+- **Commit History:** [8] commits with descriptive messages
 
 ### Git Skills Demonstrated
 - ✅ Repository initialization and configuration
@@ -60,7 +60,10 @@ Through this exercise, I learned how version control with Git helps keep project
 ### 1. Hello Flet
 ![Hello Flet](lab2_screenshots/hello_flet.png)
 
-### 2. Personal Info GUI
+### 2. Personal Info GUI (Enhanced)
+- Added dynamic greeting
+- Adjusted title design
+- Added hover effect and tooltips on buttons
 ![Personal Info GUI](lab2_screenshots/personal_info_gui.png)
 
 ### Git Repository

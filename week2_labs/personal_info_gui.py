@@ -14,13 +14,35 @@ def main(page: ft.Page):
     page.scroll = ft.ScrollMode.AUTO
     
     # Title
-    title = ft.Text(
-        "Personal Information Manager",
-        size=28,
-        weight=ft.FontWeight.BOLD,
-        text_align=ft.TextAlign.CENTER,
-        color=ft.Colors.INDIGO_700
+    title = ft.Card(
+        content=ft.Container(
+            content=ft.Text("Personal Information Manager",
+                            size=28,
+                            weight=ft.FontWeight.BOLD,
+                            text_align=ft.TextAlign.CENTER,
+                            color=ft.Colors.INDIGO_700),
+            padding=20,
+            alignment=ft.alignment.center,
+        ),
+        elevation=5,
+        shape=ft.RoundedRectangleBorder(radius=15),
+        margin=ft.margin.only(bottom=15),
     )
+    
+    # Dynamic greeting based on time of day
+    def get_greeting():
+        hour = datetime.now().hour
+        if 5 <= hour < 12:
+            return "Good Morning!"
+        elif 12 <= hour < 18:
+            return "Good Afternoon!"
+        else:
+            return "Good Evening!"
+        
+    greeting = ft.Text(get_greeting(),
+                            size=20,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.ORANGE_500)
     
     # Input fields
     first_name = ft.TextField(label="First Name", width=280)
@@ -89,7 +111,7 @@ def main(page: ft.Page):
             
             # Generate profile
             profile_content = ft.Column([
-                ft.Text("🎓 STUDENT PROFILE", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.INDIGO_700),
+                ft.Text("🎓 STUDENT PROFILE", size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.INDIGO_900),
                 ft.Divider(),
                 ft.Text(f"👤 Full Name: {first_name.value} {last_name.value}", size=16),
                 ft.Text(f"🆔 Student ID: {student_id.value or 'Not provided'}", size=16),
@@ -139,11 +161,19 @@ def main(page: ft.Page):
         dialog.open = False
         page.update()
     
-    # Buttons
+    # Buttons with tooltips and hover effect
+    def on_hover(e):
+        e.control.bgcolor = ft.Colors.INDIGO_900 if e.dat == "true" else ft.Colors.INDIGO_500
+        e.control.update()
+        
+    def on_hover_clear(e):
+        e.control.bgcolor = ft.Colors.RED_900 if e.data == "true" else ft.Colors.RED_500
+        e.control.update()
+    
     generate_btn = ft.ElevatedButton(
         "Generate Profile",
         on_click=generate_profile,
-        bgcolor=ft.Colors.INDIGO_600,
+        bgcolor=ft.Colors.INDIGO_700,
         color=ft.Colors.WHITE,
         width=150
     )
@@ -155,10 +185,12 @@ def main(page: ft.Page):
         color=ft.Colors.WHITE,
         width=150
     )
+    clear_btn.on_hover = on_hover_clear
     
     # Layout
     page.add(
         ft.Column([
+            greeting,
             title,
             ft.Divider(),
             ft.Text("Personal Information", size=18, weight=ft.FontWeight.BOLD),
