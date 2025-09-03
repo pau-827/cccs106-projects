@@ -75,7 +75,8 @@ def main(page: ft.Page):
                 ft.TextButton("Close", on_click=lambda e: close_dialog(dialog))
             ]
         )
-        page.dialog = dialog
+        
+        page.overlay.append(dialog)
         dialog.open = True
         page.update()
     
