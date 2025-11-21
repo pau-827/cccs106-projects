@@ -4,6 +4,8 @@
 import flet as ft
 from weather_service import WeatherService
 from config import Config
+import json
+from pathlib import Path
 
 class WeatherApp:
     """Main Weather Application class."""
@@ -11,8 +13,22 @@ class WeatherApp:
     def __init__(self, page: ft.Page):
         self.page = page
         self.weather_service = WeatherService()
+        self.history_file = Path("search_history.json")
+        self.search_history = self.load_history()
         self.setup_page()
         self.build_ui()
+        
+    def load_history(self):
+        """Load search history from file."""
+        if self.history_file.exists():
+            with open(self.history_file, 'r') as f:
+                return json.load(f)
+        return []
+
+    def save_history(self):
+        """Save search history to file."""
+        with open(self.history_file, 'w') as f:
+            json.dump(self.search_history, f)
     
     def setup_page(self):
         """Configure page settings."""
@@ -101,6 +117,15 @@ class WeatherApp:
             expand=True,
         )
         
+        # UI for search history
+        self.history_dropdown = ft.Dropdown(
+            label="Recent searches",
+            label_style=ft.TextStyle(size=12, color=ft.Colors.GREY_800),
+            options=[ft.dropdown.Option(city) for city in self.search_history],
+            on_change=self.on_history_select,
+            width=300
+        )
+        
         # Add all components to page
         self.page.add(
             ft.Column(
@@ -108,7 +133,15 @@ class WeatherApp:
                     title_row,
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.city_input,
+                    
+                    # Search history dropdown in a row, left-aligned
+                    ft.Row(
+                        [self.history_dropdown],
+                        alignment=ft.MainAxisAlignment.START,
+                    ),
+
                     self.search_button,
+                    
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.loading,
                     self.error_message,
@@ -132,6 +165,21 @@ class WeatherApp:
     def on_search(self, e):
         """Handle search button click or enter key press."""
         self.page.run_task(self.get_weather)
+        
+    def on_history_select(self, e):
+        self.city_input.value = e.control.value
+        self.page.update()
+    
+    def add_to_history(self, city: str):
+        if city not in self.search_history:
+            self.search_history.insert(0, city)
+            self.search_history = self.search_history[:10]  # keep last 10
+            self.save_history()
+            
+            # Update dropdown
+            if hasattr(self, "history_dropdown"):
+                self.history_dropdown.options = [ft.dropdown.Option(c) for c in self.search_history]
+                self.page.update()
     
     async def get_weather(self):
         """Fetch and display weather data."""
@@ -151,6 +199,9 @@ class WeatherApp:
         try:
             # Fetch weather data
             weather_data = await self.weather_service.get_weather(city)
+            
+            # Add to history
+            self.add_to_history(city)
             
             # Display weather
             await self.display_weather(weather_data)
