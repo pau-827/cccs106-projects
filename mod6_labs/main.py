@@ -5,7 +5,6 @@ import flet as ft
 from weather_service import WeatherService
 from config import Config
 
-
 class WeatherApp:
     """Main Weather Application class."""
     
@@ -69,7 +68,7 @@ class WeatherApp:
         # Weather display container (initially hidden)
         self.weather_container = ft.Container(
             visible=False,
-            bgcolor=ft.Colors.BLUE_50,
+            bgcolor=ft.Colors.BLUE_200,
             border_radius=10,
             padding=20,
         )
@@ -84,11 +83,29 @@ class WeatherApp:
         # Loading indicator
         self.loading = ft.ProgressRing(visible=False)
         
+        # Theme toggle button
+        self.theme_button = ft.IconButton(
+            icon=ft.Icons.DARK_MODE,
+            tooltip="Toggle theme",
+            on_click=self.toggle_theme,
+        )
+
+        # Title row with Toggle
+        title_row = ft.Row(
+            [
+                self.title,
+                self.theme_button,
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            expand=True,
+        )
+        
         # Add all components to page
         self.page.add(
             ft.Column(
                 [
-                    self.title,
+                    title_row,
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.city_input,
                     self.search_button,
@@ -100,22 +117,6 @@ class WeatherApp:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=10,
             )
-        )
-        
-        # Theme toggle button
-        self.theme_button = ft.IconButton(
-            icon=ft.Icons.DARK_MODE,
-            tooltip="Toggle theme",
-            on_click=self.toggle_theme,
-        )
-
-        # Update the Column to include the theme button in the title row
-        title_row = ft.Row(
-            [
-                self.title,
-                self.theme_button,
-            ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         )
         
     def toggle_theme(self, e):
@@ -152,7 +153,7 @@ class WeatherApp:
             weather_data = await self.weather_service.get_weather(city)
             
             # Display weather
-            self.display_weather(weather_data)
+            await self.display_weather(weather_data)
             
         except Exception as e:
             self.show_error(str(e))
@@ -161,7 +162,7 @@ class WeatherApp:
             self.loading.visible = False
             self.page.update()
     
-    def display_weather(self, data: dict):
+    async def display_weather(self, data: dict):
         """Display weather information."""
         # Extract data
         city_name = data.get("name", "Unknown")
@@ -172,6 +173,8 @@ class WeatherApp:
         description = data.get("weather", [{}])[0].get("description", "").title()
         icon_code = data.get("weather", [{}])[0].get("icon", "01d")
         wind_speed = data.get("wind", {}).get("speed", 0)
+        pressure = data.get('main', {}).get('pressure', 0)
+        cloudiness = data.get('clouds', {}).get('all', 0)
         
         # Build weather display
         self.weather_container.content = ft.Column(
@@ -181,6 +184,7 @@ class WeatherApp:
                     f"{city_name}, {country}",
                     size=24,
                     weight=ft.FontWeight.BOLD,
+                    color=ft.Colors.BLUE_900,
                 ),
                 
                 # Weather icon and description
@@ -195,6 +199,7 @@ class WeatherApp:
                             description,
                             size=20,
                             italic=True,
+                             color=ft.Colors.BLUE_900,
                         ),
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,
@@ -228,6 +233,16 @@ class WeatherApp:
                             ft.Icons.AIR,
                             "Wind Speed",
                             f"{wind_speed} m/s"
+                        ),
+                        self.create_info_card(
+                            ft.Icons.SPEED,
+                            "Pressure",
+                            f"{pressure} hPa"
+                        ),
+                        self.create_info_card(
+                            ft.Icons.CLOUD,
+                            "Cloudiness",
+                            f"{cloudiness} %"
                         ),
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_EVENLY,
@@ -265,7 +280,7 @@ class WeatherApp:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=5,
             ),
-            bgcolor=ft.Colors.WHITE,
+            bgcolor=ft.Colors.YELLOW_200,
             border_radius=10,
             padding=15,
             width=150,
