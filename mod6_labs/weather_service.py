@@ -114,3 +114,21 @@ class WeatherService:
         except Exception as e:
             raise WeatherServiceError(f"Error fetching weather data: {str(e)}")
         
+    # 5-Day Weather Forecast Feature
+    async def get_forecast(self, city: str) -> Dict:
+        """Get 5-day weather forecast."""
+        forecast_url = "https://api.openweathermap.org/data/2.5/forecast"
+        params = {
+            "q": city,
+            "appid": self.api_key,
+            "units": Config.UNITS,
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.get(forecast_url, params=params)
+                response.raise_for_status()
+                return response.json()
+        
+        except Exception as e:
+            raise WeatherServiceError(f"Error fetching weather data: {str(e)}")

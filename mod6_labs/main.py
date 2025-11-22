@@ -89,6 +89,13 @@ class WeatherApp:
             padding=20,
         )
         
+        # Forecast container (hidden by default)
+        self.forecast_container = ft.Container(
+            visible=False,
+            bgcolor=ft.Colors.BLUE_50,
+            border_radius=10,
+        )
+        
         # Error message
         self.error_message = ft.Text(
             "",
@@ -125,6 +132,23 @@ class WeatherApp:
             on_change=self.on_history_select,
             width=300
         )
+
+        weather_and_forecast_row = ft.ResponsiveRow(
+            controls=[
+                ft.Container(
+                    content=self.weather_container,
+                    col={"xs": 12, "md": 6},
+                    padding=0
+                ),
+                ft.Container(
+                    content=self.forecast_container,
+                    col={"xs": 12, "md": 6},
+                    padding=0
+                ),
+            ],
+            spacing=10,
+            run_spacing=10,
+        )
         
         # Add all components to page
         self.page.add(
@@ -145,10 +169,12 @@ class WeatherApp:
                     ft.Divider(height=20, color=ft.Colors.TRANSPARENT),
                     self.loading,
                     self.error_message,
-                    self.weather_container,
+                    weather_and_forecast_row,
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=10,
+                scroll=ft.ScrollMode.AUTO,
+                expand=True,
             )
         )
         
@@ -194,6 +220,7 @@ class WeatherApp:
         self.loading.visible = True
         self.error_message.visible = False
         self.weather_container.visible = False
+        self.forecast_container.visible = False
         self.page.update()
         
         try:
@@ -205,6 +232,12 @@ class WeatherApp:
             
             # Display weather
             await self.display_weather(weather_data)
+            
+            # Fetch weather data
+            forecast_data = await self.weather_service.get_forecast(city)
+            
+            # Display forecast
+            await self.display_forecast(forecast_data)
             
         except Exception as e:
             self.show_error(str(e))
@@ -233,11 +266,11 @@ class WeatherApp:
                 # Location
                 ft.Text(
                     f"{city_name}, {country}",
-                    size=24,
+                    size=22,
                     weight=ft.FontWeight.BOLD,
                     color=ft.Colors.BLUE_900,
                 ),
-                
+
                 # Weather icon and description
                 ft.Row(
                     [
@@ -250,53 +283,59 @@ class WeatherApp:
                             description,
                             size=20,
                             italic=True,
-                             color=ft.Colors.BLUE_900,
+                            color=ft.Colors.BLUE_900,
                         ),
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,
                 ),
-                
+
                 # Temperature
                 ft.Text(
                     f"{temp:.1f}°C",
-                    size=48,
+                    size=40,
                     weight=ft.FontWeight.BOLD,
                     color=ft.Colors.BLUE_900,
                 ),
-                
+
                 ft.Text(
                     f"Feels like {feels_like:.1f}°C",
                     size=16,
                     color=ft.Colors.GREY_700,
                 ),
-                
+
                 ft.Divider(),
-                
+
                 # Additional info
-                ft.Row(
-                    [
-                        self.create_info_card(
-                            ft.Icons.WATER_DROP,
-                            "Humidity",
-                            f"{humidity}%"
+                ft.ResponsiveRow(
+                    controls=[
+                        ft.Container(
+                            content=self.create_info_card(
+                                ft.Icons.WATER_DROP, "Humidity", f"{humidity}%"
+                            ),
+                            col={"xs": 12, "sm": 6, "md": 3},
                         ),
-                        self.create_info_card(
-                            ft.Icons.AIR,
-                            "Wind Speed",
-                            f"{wind_speed} m/s"
+                        ft.Container(
+                            content=self.create_info_card(
+                                ft.Icons.AIR, "Wind Speed", f"{wind_speed} m/s"
+                            ),
+                            col={"xs": 12, "sm": 6, "md": 3},
                         ),
-                        self.create_info_card(
-                            ft.Icons.SPEED,
-                            "Pressure",
-                            f"{pressure} hPa"
+                        ft.Container(
+                            content=self.create_info_card(
+                                ft.Icons.SPEED, "Pressure", f"{pressure} hPa"
+                            ),
+                            col={"xs": 12, "sm": 6, "md": 3},
                         ),
-                        self.create_info_card(
-                            ft.Icons.CLOUD,
-                            "Cloudiness",
-                            f"{cloudiness} %"
+                        ft.Container(
+                            content=self.create_info_card(
+                                ft.Icons.CLOUD, "Cloudiness", f"{cloudiness} %"
+                            ),
+                            col={"xs": 12, "sm": 6, "md": 3},
                         ),
                     ],
-                    alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                    spacing=10,
+                    run_spacing=10,
+                    alignment=ft.MainAxisAlignment.CENTER,
                 ),
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -312,6 +351,62 @@ class WeatherApp:
         
         # Fade in
         self.weather_container.opacity = 1
+        self.page.update()
+        
+    async def display_forecast(self, data: dict):
+        """Display 5-day forecast using one sample per day."""
+        forecast_list = data.get("list", [])
+        daily_forecast = forecast_list[::8]  # 5 days reading
+
+        # Create forecast cards
+        forecast_cards = []
+        
+        for item in daily_forecast:
+            card=ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Text(item["dt_txt"].split()[0], size=14, color=ft.Colors.BLUE_900, weight=ft.FontWeight.BOLD),
+                        ft.Image(
+                            src=f"https://openweathermap.org/img/wn/{item['weather'][0]['icon']}@2x.png",
+                            width=60,
+                            height=60,
+                        ),
+                        ft.Text(
+                            f"{item['main']['temp']}°C",
+                            size=16,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.BLUE_900
+                        ),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=5,
+                ),
+                bgcolor=ft.Colors.BLUE_100,
+                border_radius=10,
+                padding=10,
+                width=120,
+                height=150,
+                col={"xs": 12, "sm": 6, "md": 4}
+            )
+            forecast_cards.append(card)
+
+        # Make the entire forecast section big like the left weather box
+        self.forecast_container.content = ft.Column(
+            [
+                ft.Text("5-Day Forecast", size=22, color=ft.Colors.BLUE_900, weight=ft.FontWeight.BOLD),
+                ft.ResponsiveRow(
+                    controls=forecast_cards,
+                    spacing=15,
+                    run_spacing=10,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=15,
+        )
+        self.forecast_container.padding = 20
+        self.forecast_container.border_radius = 10
+        self.forecast_container.visible = True
         self.page.update()
     
     def create_info_card(self, icon, label, value):
@@ -342,6 +437,7 @@ class WeatherApp:
         self.error_message.value = f"❌ {message}"
         self.error_message.visible = True
         self.weather_container.visible = False
+        self.forecast_container.visible = False
         self.page.update()
 
 
